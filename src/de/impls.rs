@@ -8,7 +8,7 @@ use crate::{
 use serde::de::*;
 use std::{
     collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque},
-    convert::From,
+    convert::{From, TryInto},
     fmt::{self, Display},
     hash::{BuildHasher, Hash},
     iter::FromIterator,
@@ -753,3 +753,32 @@ use_signed_duration!(
     {String, Strict =>}
     {FORMAT, Flexible => FORMAT: Format}
 );
+
+impl<'de, T, U> DeserializeAs<'de, T> for FromInto<U>
+where
+    U: Into<T>,
+    U: Deserialize<'de>,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<T, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(U::deserialize(deserializer)?.into())
+    }
+}
+
+impl<'de, T, U> DeserializeAs<'de, T> for TryFromInto<U>
+where
+    U: TryInto<T>,
+    <U as TryInto<T>>::Error: Display,
+    U: Deserialize<'de>,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<T, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        U::deserialize(deserializer)?
+            .try_into()
+            .map_err(Error::custom)
+    }
+}

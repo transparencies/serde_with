@@ -1,13 +1,14 @@
-use utils::duration::DurationSigned;
-
 use super::*;
 use crate::{formats::Strictness, rust::StringWithSeparator, Separator};
+use serde::ser::Error as _;
 use std::{
     collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque},
+    convert::TryInto,
     fmt::Display,
     hash::{BuildHasher, Hash},
     time::{Duration, SystemTime},
 };
+use utils::duration::DurationSigned;
 
 impl<T, U> SerializeAs<Box<T>> for Box<U>
 where
@@ -386,3 +387,33 @@ use_signed_duration!(
     {f64, STRICTNESS => STRICTNESS: Strictness}
     {String, STRICTNESS => STRICTNESS: Strictness}
 );
+
+impl<T, U> SerializeAs<T> for FromInto<U>
+where
+    for<'a> &'a T: Into<U>,
+    U: Serialize,
+{
+    fn serialize_as<S>(source: &T, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        source.into().serialize(serializer)
+    }
+}
+
+impl<T, U> SerializeAs<T> for TryFromInto<U>
+where
+    for<'a> &'a T: TryInto<U>,
+    for<'a> <&'a T as TryInto<U>>::Error: Display,
+    U: Serialize,
+{
+    fn serialize_as<S>(source: &T, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        source
+            .try_into()
+            .map_err(S::Error::custom)?
+            .serialize(serializer)
+    }
+}

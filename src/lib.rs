@@ -1140,3 +1140,11 @@ pub struct TimestampSecondsWithFrac<
     FORMAT: formats::Format = f64,
     STRICTNESS: formats::Strictness = formats::Strict,
 >(PhantomData<(FORMAT, STRICTNESS)>);
+
+/// TODO
+#[derive(Debug)]
+pub struct FromInto<T>(PhantomData<T>);
+
+/// TODO
+#[derive(Debug)]
+pub struct TryFromInto<T>(PhantomData<T>);
