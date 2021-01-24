@@ -3,6 +3,7 @@ use utils::duration::DurationSigned;
 use super::*;
 use crate::{formats::Strictness, rust::StringWithSeparator, Separator};
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque},
     fmt::Display,
     hash::{BuildHasher, Hash},
@@ -418,5 +419,32 @@ where
         S: Serializer,
     {
         serializer.serialize_some(&SerializeAsWrap::<T, U>::new(source))
+    }
+}
+
+impl SerializeAs<&[u8]> for Bytes {
+    fn serialize_as<S>(bytes: &&[u8], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(bytes)
+    }
+}
+
+impl SerializeAs<Vec<u8>> for Bytes {
+    fn serialize_as<S>(bytes: &Vec<u8>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(bytes)
+    }
+}
+
+impl<'a> SerializeAs<Cow<'a, [u8]>> for Bytes {
+    fn serialize_as<S>(bytes: &Cow<'a, [u8]>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(bytes)
     }
 }

@@ -1311,3 +1311,20 @@ pub struct TimestampNanoSecondsWithFrac<
     FORMAT: formats::Format = f64,
     STRICTNESS: formats::Strictness = formats::Strict,
 >(PhantomData<(FORMAT, STRICTNESS)>);
+
+/// Optimized handling of owned and borrowed byte representations.
+///
+/// Serialization of byte sequences like `&[u8]` or `Vec<u8>` is quite inefficient.
+/// This converter type optimizes the serialization and deserialization.
+/// Additionally, it enables zero-copy deserialization for `&'de [u8]`.
+///
+/// This is a port of the `serde_bytes` crate making it compatible with the `serde_as`-annotation, which allows it to be used in more cases than provided by `serde_bytes`.
+///
+/// The type provides de-/serialization for these types:
+/// * `&[u8]`
+/// * `Box<[u8]>`
+/// * `Vec<u8>`
+/// * `Cow<'_, [u8]>`
+///
+#[derive(Copy, Clone, Debug, Default)]
+pub struct Bytes;

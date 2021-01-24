@@ -7,6 +7,7 @@ use crate::{
 };
 use serde::de::*;
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque},
     convert::From,
     fmt::{self, Display},
@@ -786,5 +787,127 @@ where
         D: Deserializer<'de>,
     {
         Ok(Option::<U>::deserialize_as(deserializer)?.unwrap_or_default())
+    }
+}
+
+impl<'de> DeserializeAs<'de, &'de [u8]> for Bytes {
+    fn deserialize_as<D>(deserializer: D) -> Result<&'de [u8], D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        <&'de [u8]>::deserialize(deserializer)
+    }
+}
+
+impl<'de> DeserializeAs<'de, Vec<u8>> for Bytes {
+    fn deserialize_as<D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct VecVisitor;
+
+        impl<'de> Visitor<'de> for VecVisitor {
+            type Value = Vec<u8>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a byte array")
+            }
+
+            #[inline]
+            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(v.to_vec())
+            }
+
+            #[inline]
+            fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(v)
+            }
+        }
+
+        deserializer.deserialize_byte_buf(VecVisitor)
+    }
+}
+
+impl<'a, 'de> DeserializeAs<'de, Cow<'a, [u8]>> for Bytes
+where
+    'de: 'a,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<Cow<'a, [u8]>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct CowVisitor;
+
+        impl<'de> Visitor<'de> for CowVisitor {
+            type Value = Cow<'de, [u8]>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a byte array")
+            }
+
+            fn visit_borrowed_bytes<E>(self, v: &'de [u8]) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Cow::Borrowed(v))
+            }
+
+            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Cow::Borrowed(v.as_bytes()))
+            }
+
+            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Cow::Owned(v.to_vec()))
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Cow::Owned(v.as_bytes().to_vec()))
+            }
+
+            fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Cow::Owned(v))
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Cow::Owned(v.into_bytes()))
+            }
+
+            fn visit_seq<V>(self, mut visitor: V) -> Result<Self::Value, V::Error>
+            where
+                V: SeqAccess<'de>,
+            {
+                let len = std::cmp::min(visitor.size_hint().unwrap_or(0), 4096);
+                let mut bytes = Vec::with_capacity(len);
+
+                while let Some(b) = visitor.next_element()? {
+                    bytes.push(b);
+                }
+
+                Ok(Cow::Owned(bytes))
+            }
+        }
+
+        deserializer.deserialize_bytes(CowVisitor)
     }
 }
