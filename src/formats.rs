@@ -66,6 +66,11 @@ create_format!(
     Uppercase
     /// Use lowercase characters
     Lowercase
+
+    /// TODO
+    PreferOne
+    /// TODO
+    PreferMany
 );
 
 /// Specify how lenient the deserialization process should be

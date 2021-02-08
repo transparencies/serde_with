@@ -14,6 +14,7 @@ use std::{
     iter::FromIterator,
     str::FromStr,
     time::{Duration, SystemTime},
+    unreachable,
 };
 
 impl<'de, T, U> DeserializeAs<'de, Box<T>> for Box<U>
@@ -649,6 +650,7 @@ where
             // This is necessary to make this work, when instead of having a direct value
             // like integer or string, the deserializer sees a list or map.
             Error(IgnoredAny),
+            #[serde(skip)]
             _JustAMarkerForTheLifetime(PhantomData<&'a u32>),
         }
 
@@ -786,5 +788,40 @@ where
         D: Deserializer<'de>,
     {
         Ok(Option::<U>::deserialize_as(deserializer)?.unwrap_or_default())
+    }
+}
+
+impl<'de, T, U, FORMAT> DeserializeAs<'de, Vec<T>> for OneOrMany<U, FORMAT>
+where
+    U: DeserializeAs<'de, T>,
+    FORMAT: Format,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<Vec<T>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(serde::Deserialize)]
+        #[serde(
+            untagged,
+            bound(deserialize = r#"DeserializeAsWrap<T, U>: Deserialize<'de>,
+                DeserializeAsWrap<Vec<T>, Vec<U>>: Deserialize<'de>"#),
+            expecting = "a list or single element"
+        )]
+        enum Helper<'a, T, U>
+        where
+            U: DeserializeAs<'a, T>,
+        {
+            One(DeserializeAsWrap<T, U>),
+            Many(DeserializeAsWrap<Vec<T>, Vec<U>>),
+            #[serde(skip)]
+            _JustAMarkerForTheLifetime(PhantomData<&'a u32>),
+        }
+
+        let h: Helper<'de, T, U> = Deserialize::deserialize(deserializer)?;
+        match h {
+            Helper::One(one) => Ok(vec![one.into_inner()]),
+            Helper::Many(many) => Ok(many.into_inner()),
+            _ => unreachable!(),
+        }
     }
 }
