@@ -34,7 +34,7 @@ jobs:
           rustup default ${{ matrix.rust }}
           cargo --version
           rustc --version
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: clippy "No Default Features" (${{ matrix.os }} / ${{ matrix.rust }})
         run: cargo clippy --workspace --no-default-features --all-targets
       - name: clippy "Default" (${{ matrix.os }} / ${{ matrix.rust }})
@@ -79,7 +79,7 @@ jobs:
           rustup default ${{ matrix.rust }}
           cargo --version
           rustc --version
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       # Build the project
       - name: "Build (${{ matrix.os }} / ${{ matrix.rust }} / Crate ${{ matrix.crate }})"
