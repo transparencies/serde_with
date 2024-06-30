@@ -11,8 +11,8 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/jonasbb/serde_with/"
-rust-version = "1.66"
-version = "3.8.1"
+rust-version = "1.67"
+version = "3.8.2"
 
 [workspace.metadata.release]
 consolidate-commits = true
@@ -24,8 +24,8 @@ sign-tag = true
 tag = false
 
 [workspace.lints.rust]
+rust_2018_idioms = { level = "warn", priority = -1 }
 missing_docs = "warn"
-rust_2018_idioms = "warn"
 trivial_casts = "warn"
 trivial_numeric_casts = "warn"
 unused_extern_crates = "warn"
@@ -35,10 +35,7 @@ unused_import_braces = "warn"
 variant_size_differences = "warn"
 # Unsafe code is needed for array initialization using MaybeUninit.
 # unsafe_code = "forbid"
-# FIXME: For tarpaulin some code is excluded, since tarpaulin does not detect the line coverage well
-# Statements like: #![cfg(not(tarpaulin_include))]
-# but the lint doesn't like them and it is probably better to not have a build.rs just for that.
-unexpected_cfgs = "allow"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin)', 'cfg(tarpaulin_include)'] }
 
 [workspace.lints.clippy]
 # These lints have false positives and are disabled until they are fixed.
