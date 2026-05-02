@@ -341,6 +341,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashbrown"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
+dependencies = [
+ "serde",
+ "serde_core",
+]
+
+[[package]]
 name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1094,6 +1104,7 @@ dependencies = [
  "hashbrown 0.14.3",
  "hashbrown 0.15.0",
  "hashbrown 0.16.0",
+ "hashbrown 0.17.0",
  "hex",
  "indexmap 1.9.3",
  "indexmap 2.11.4",
